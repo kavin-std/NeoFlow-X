@@ -1,6 +1,5 @@
 import React from "react";
 import MailForm from "../components/MailForm";
-import ChatBox from "../components/ChatBox";
 
 function Mail() {
   return (
@@ -14,17 +13,7 @@ function Mail() {
     >
       <h1 style={{ marginBottom: "20px" }}>AI Mail Generator</h1>
 
-     <div
-  style={{
-    display: "flex",
-    gap: "40px",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-  }}
->
-  <MailForm />
-  <ChatBox />
-</div>
+      <MailForm />
     </div>
   );
 }
