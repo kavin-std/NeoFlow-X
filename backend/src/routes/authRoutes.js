@@ -87,4 +87,24 @@ router.get("/google/callback", async (req, res) => {
   }
 });
 
+router.get("/me", (req, res) => {
+  const jwt = require("jsonwebtoken");
+
+  const token = req.cookies.neoflow_token;
+
+  if (!token) {
+    return res.status(401).json({ authenticated: false });
+  }
+
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    return res.json({
+      authenticated: true,
+      user: decoded,
+    });
+  } catch (error) {
+    return res.status(401).json({ authenticated: false });
+  }
+});
+
 module.exports = router;
