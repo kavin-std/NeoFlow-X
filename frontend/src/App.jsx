@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
@@ -12,40 +12,57 @@ import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
 
 function App() {
-  const [isAuth, setIsAuth] = useState(
-    localStorage.getItem("token") === "true"
-  );
+  const [isAuth, setIsAuth] = useState(null); // null = loading state
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch(
+          "https://neoflow-x.onrender.com/auth/me",
+          {
+            credentials: "include", // VERY IMPORTANT
+          }
+        );
+
+        const data = await res.json();
+
+        if (data.authenticated) {
+          setIsAuth(true);
+        } else {
+          setIsAuth(false);
+        }
+      } catch (error) {
+        setIsAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
+
+  // Loading screen while checking auth
+  if (isAuth === null) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <BrowserRouter>
       <Routes>
-
         {/* Login */}
-        <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
+        <Route path="/login" element={<Login />} />
 
         {/* Protected Area */}
         <Route
           path="/"
           element={isAuth ? <Layout /> : <Navigate to="/login" />}
         >
-          {/* Home */}
           <Route index element={<Dashboard />} />
-
-          {/* Other Pages */}
           <Route path="calendar" element={<Calendar />} />
           <Route path="tasks" element={<Tasks />} />
-
-          {/* MAILS SECTION */}
           <Route path="mails" element={<Mails />} />
           <Route path="mail" element={<Mail />} />
-
-          {/* Assistant */}
           <Route path="assistant" element={<Assistant />} />
-
-          {/* Settings */}
           <Route path="settings" element={<Settings />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   );
