@@ -2,9 +2,18 @@ import React from "react";
 
 function Navbar() {
 
-  const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    window.location.href = "/";
+  const handleLogout = async () => {
+    try {
+      await fetch("https://neoflow-x.onrender.com/auth/logout", {
+        method: "POST",
+        credentials: "include", // IMPORTANT: send cookie
+      });
+
+      // After clearing backend cookie
+      window.location.href = "/login";
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
   };
 
   return (
