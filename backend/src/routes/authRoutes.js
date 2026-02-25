@@ -1,7 +1,7 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
-const oauth2Client = require("../config/google"); // make sure this exports OAuth2Client
+const oauth2Client = require("../config/google");
 
 const router = express.Router();
 
@@ -12,7 +12,7 @@ STEP 1 — Redirect user to Google
 */
 router.get("/google", (req, res) => {
   const url = oauth2Client.generateAuthUrl({
-    access_type: "offline", // required for refresh token
+    access_type: "offline",
     prompt: "consent",
     scope: [
       "https://www.googleapis.com/auth/userinfo.profile",
@@ -42,7 +42,7 @@ router.get("/google/callback", async (req, res) => {
     const { tokens } = await oauth2Client.getToken(code);
     oauth2Client.setCredentials(tokens);
 
-    // Get user profile info
+    // Get user info
     const userInfo = await axios.get(
       "https://www.googleapis.com/oauth2/v2/userinfo",
       {
@@ -58,27 +58,24 @@ router.get("/google/callback", async (req, res) => {
       picture: userInfo.data.picture,
     };
 
-    // Create JWT (7 day session)
+    // Create JWT
     const jwtToken = jwt.sign(user, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    /*
-    TEMPORARY TOKEN STORAGE (Memory)
-    ⚠️ This will reset when server restarts
-    We will replace this with DB later
-    */
+    // Temporary in-memory token store
     global.userSessions = global.userSessions || {};
     global.userSessions[user.email] = tokens;
 
-    // Send secure HTTP-only cookie
+    // ✅ FIXED COOKIE CONFIG
     res.cookie("neoflow_token", jwtToken, {
       httpOnly: true,
-      secure: true,       // required for HTTPS (Render + Vercel)
-      sameSite: "none",   // required for cross-domain
+      secure: true,
+      sameSite: "none",
+      path: "/",              // IMPORTANT
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    // Redirect to frontend dashboard
     res.redirect("https://neoflow-x.vercel.app/");
 
   } catch (error) {
@@ -87,9 +84,12 @@ router.get("/google/callback", async (req, res) => {
   }
 });
 
+/*
+=====================================
+GET CURRENT USER
+=====================================
+*/
 router.get("/me", (req, res) => {
-  const jwt = require("jsonwebtoken");
-
   const token = req.cookies.neoflow_token;
 
   if (!token) {
@@ -107,11 +107,17 @@ router.get("/me", (req, res) => {
   }
 });
 
+/*
+=====================================
+LOGOUT
+=====================================
+*/
 router.post("/logout", (req, res) => {
   res.clearCookie("neoflow_token", {
     httpOnly: true,
     secure: true,
     sameSite: "none",
+    path: "/",   // must match cookie path
   });
 
   res.json({ message: "Logged out successfully" });
