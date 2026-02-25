@@ -107,4 +107,14 @@ router.get("/me", (req, res) => {
   }
 });
 
+router.post("/logout", (req, res) => {
+  res.clearCookie("neoflow_token", {
+    httpOnly: true,
+    secure: true,
+    sameSite: "none",
+  });
+
+  res.json({ message: "Logged out successfully" });
+});
+
 module.exports = router;
