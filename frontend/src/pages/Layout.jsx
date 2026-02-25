@@ -1,15 +1,13 @@
-import { FaBars } from "react-icons/fa";
 import { useState } from "react";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
-const Layout = ({ children, darkMode, setDarkMode }) => {
+const Layout = ({ children }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <div style={{ display: "flex" }}>
-      
+    <div className="flex h-screen bg-gray-100">
       
       {/* Sidebar */}
       <Sidebar
@@ -22,26 +20,22 @@ const Layout = ({ children, darkMode, setDarkMode }) => {
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          style={{
-            position: "fixed",
-            top: 0,
-            left: 0,
-            width: "100vw",
-            height: "100vh",
-            background: "rgba(0,0,0,0.4)",
-            zIndex: 5,
-          }}
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
         />
       )}
 
       {/* Main Content */}
-      <div style={{ flex: 1 }}>
+      <div className="flex flex-col flex-1">
+        
         <Navbar
-          darkMode={darkMode}
-          setDarkMode={setDarkMode}
-          setMobileOpen={setMobileOpen}
+          collapsed={collapsed}
+          setCollapsed={setCollapsed}
         />
-        {children}
+
+        <main className="flex-1 overflow-y-auto p-6 bg-gray-50">
+          {children}
+        </main>
+
       </div>
     </div>
   );
