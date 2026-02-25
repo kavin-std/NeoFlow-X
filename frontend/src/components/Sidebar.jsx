@@ -11,6 +11,7 @@ const Sidebar = () => {
         padding: "20px",
         display: "flex",
         flexDirection: "column",
+        fontFamily: "Segoe UI, Arial, sans-serif"   // 🔥 forces same font everywhere
       }}
     >
       <h2 style={{ marginBottom: "30px" }}>NeoFlow X</h2>
@@ -27,6 +28,10 @@ const Sidebar = () => {
 
         <NavLink to="/tasks" style={linkStyle}>
           Tasks
+        </NavLink>
+
+        <NavLink to="/mails" style={linkStyle}>
+          Mails
         </NavLink>
 
         <NavLink to="/mail" style={linkStyle}>
@@ -53,6 +58,9 @@ const linkStyle = ({ isActive }) => ({
   borderRadius: "8px",
   background: isActive ? "#2563eb" : "transparent",
   transition: "0.2s",
+  fontFamily: "inherit",
+  fontSize: "15px",
+  display: "block"
 });
 
 export default Sidebar;

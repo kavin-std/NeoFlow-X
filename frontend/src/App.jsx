@@ -4,11 +4,12 @@ import { useState } from "react";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import Mail from "./pages/Mail";
 import Calendar from "./pages/Calendar";
 import Tasks from "./pages/Tasks";
-import Settings from "./pages/Settings";
+import Mail from "./pages/Mail";
+import Mails from "./pages/Mails";
 import Assistant from "./pages/Assistant";
+import Settings from "./pages/Settings";
 
 function App() {
   const [isAuth, setIsAuth] = useState(
@@ -19,31 +20,29 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* Login Page */}
-        <Route
-          path="/login"
-          element={<Login setIsAuth={setIsAuth} />}
-        />
+        {/* Login */}
+        <Route path="/login" element={<Login setIsAuth={setIsAuth} />} />
 
-        {/* Protected Layout */}
+        {/* Protected Area */}
         <Route
           path="/"
-          element={
-            isAuth ? (
-              <Layout />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
+          element={isAuth ? <Layout /> : <Navigate to="/login" />}
         >
-          {/* Dashboard (Home) */}
+          {/* Home */}
           <Route index element={<Dashboard />} />
 
           {/* Other Pages */}
           <Route path="calendar" element={<Calendar />} />
           <Route path="tasks" element={<Tasks />} />
+
+          {/* MAILS SECTION */}
+          <Route path="mails" element={<Mails />} />
           <Route path="mail" element={<Mail />} />
+
+          {/* Assistant */}
           <Route path="assistant" element={<Assistant />} />
+
+          {/* Settings */}
           <Route path="settings" element={<Settings />} />
         </Route>
 
