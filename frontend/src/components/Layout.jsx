@@ -1,16 +1,15 @@
-import { FaBars } from "react-icons/fa";
 import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Navbar from "./Navbar";
 
-const Layout = ({ children, darkMode, setDarkMode }) => {
+const Layout = ({ darkMode, setDarkMode }) => {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div style={{ display: "flex" }}>
-      
-      
+
       {/* Sidebar */}
       <Sidebar
         collapsed={collapsed}
@@ -41,7 +40,12 @@ const Layout = ({ children, darkMode, setDarkMode }) => {
           setDarkMode={setDarkMode}
           setMobileOpen={setMobileOpen}
         />
-        {children}
+
+        {/* THIS IS THE IMPORTANT PART */}
+        <div style={{ padding: "20px" }}>
+          <Outlet />
+        </div>
+
       </div>
     </div>
   );
