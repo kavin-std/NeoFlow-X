@@ -10,7 +10,7 @@ function Navbar() {
     // localStorage.clear();
 
     // 3️⃣ Redirect to login
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return (
