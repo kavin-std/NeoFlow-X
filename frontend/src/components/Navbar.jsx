@@ -2,18 +2,15 @@ import React from "react";
 
 function Navbar() {
 
-  const handleLogout = async () => {
-    try {
-      await fetch("https://neoflow-x.onrender.com/auth/logout", {
-        method: "POST",
-        credentials: "include", // IMPORTANT: send cookie
-      });
+  const handleLogout = () => {
+    // 1️⃣ Remove JWT from localStorage
+    localStorage.removeItem("auth_token");
 
-      // After clearing backend cookie
-      window.location.href = "/login";
-    } catch (error) {
-      console.error("Logout failed:", error);
-    }
+    // 2️⃣ Optional: clear any other session data
+    // localStorage.clear();
+
+    // 3️⃣ Redirect to login
+    window.location.href = "/login";
   };
 
   return (
