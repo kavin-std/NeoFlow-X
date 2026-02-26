@@ -1,27 +1,32 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
-const verifyToken = require("./middleware/authMiddleware");
 require("dotenv").config();
 
+const verifyToken = require("./middleware/authMiddleware");
 const authRoutes = require("./routes/authRoutes");
-app.use("/api/gmail", verifyToken, gmailRoutes);
-app.use("/api/ai", verifyToken, aiRoutes);
-app.use("/api/calendar", verifyToken, calendarRoutes);
+const gmailRoutes = require("./routes/gmailRoutes");
+const aiRoutes = require("./routes/aiRoutes");
+const calendarRoutes = require("./routes/calendarRoutes");
 
 const app = express();
 
+// CORS configuration
 app.use(cors({
   origin: "https://neoflow-x.vercel.app",
   credentials: true,
 }));
+
 app.use(express.json());
 app.use(cookieParser());
 
-app.use("/api/gmail", gmailRoutes);
-app.use("/api/ai", aiRoutes);
-app.use("/api/calendar", calendarRoutes);
+// Public auth routes
 app.use("/auth", authRoutes);
+
+// Protected API routes
+app.use("/api/gmail", verifyToken, gmailRoutes);
+app.use("/api/ai", verifyToken, aiRoutes);
+app.use("/api/calendar", verifyToken, calendarRoutes);
 
 app.get("/", (req, res) => {
   res.send("NeoFlow X Backend Running 🚀");
