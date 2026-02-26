@@ -63,16 +63,17 @@ router.get("/google/callback", async (req, res) => {
       expiresIn: "7d",
     });
 
-    // Temporary in-memory token store
+    // Store Google tokens in memory
     global.userSessions = global.userSessions || {};
     global.userSessions[user.email] = tokens;
 
-    // ✅ FIXED COOKIE CONFIG
-    res.redirect(
-  "https://neoflow-x.vercel.app/?token=" + jwtToken
-);
+    console.log("Stored sessions after login:", global.userSessions);
 
-    res.redirect("https://neoflow-x.vercel.app/");
+    // ✅ Dynamic Frontend URL (VERY IMPORTANT)
+    const FRONTEND_URL =
+      process.env.FRONTEND_URL || "http://localhost:5173";
+    console.log("FRONTEND_URL:", FRONTEND_URL); // 👈 ADD HERE
+    return res.redirect(`${FRONTEND_URL}/?token=${jwtToken}`);
 
   } catch (error) {
     console.error("Google Auth Error:", error);
@@ -105,22 +106,6 @@ router.get("/me", (req, res) => {
   } catch (error) {
     return res.status(401).json({ authenticated: false });
   }
-});
-
-/*
-=====================================
-LOGOUT
-=====================================
-*/
-router.post("/logout", (req, res) => {
-  res.clearCookie("neoflow_token", {
-    httpOnly: true,
-    secure: true,
-    sameSite: "none",
-    path: "/",   // must match cookie path
-  });
-
-  res.json({ message: "Logged out successfully" });
 });
 
 module.exports = router;

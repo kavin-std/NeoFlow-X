@@ -1,4 +1,4 @@
-const BASE_URL = "https://neoflow-x.onrender.com";
+const BASE_URL = import.meta.env.VITE_BACKEND_URL || "http://localhost:5000";
 
 export const apiRequest = async (endpoint, options = {}) => {
   const token = localStorage.getItem("auth_token");
@@ -7,16 +7,16 @@ export const apiRequest = async (endpoint, options = {}) => {
     ...options,
     headers: {
       "Content-Type": "application/json",
-      Authorization: "Bearer " + token,
+      "Authorization": `Bearer ${token}`,
       ...(options.headers || {}),
     },
   });
 
-  if (response.status === 401) {
-    localStorage.removeItem("auth_token");
-    window.location.href = "/login";
-    return;
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "API Error");
   }
 
-  return response.json();
+  return data;
 };

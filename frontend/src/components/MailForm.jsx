@@ -8,10 +8,10 @@ function MailForm() {
   const [purpose, setPurpose] = useState("");
   const [generatedMail, setGeneratedMail] = useState("");
   const [loading, setLoading] = useState(false);
+  const [sending, setSending] = useState(false);
 
   const handleGenerate = async (e) => {
     e.preventDefault();
-
     setLoading(true);
     setGeneratedMail("");
 
@@ -26,13 +26,7 @@ function MailForm() {
         }),
       });
 
-      if (response?.content) {
-        setGeneratedMail(response.content);
-      } else if (response?.message) {
-        setGeneratedMail(response.message);
-      } else {
-        setGeneratedMail("No response received.");
-      }
+      setGeneratedMail(response?.content || response?.email || "No response received.");
     } catch (error) {
       setGeneratedMail("Error generating mail.");
     }
@@ -40,46 +34,63 @@ function MailForm() {
     setLoading(false);
   };
 
+  const handleSend = async () => {
+    if (!generatedMail) {
+      alert("Generate email first.");
+      return;
+    }
+
+    setSending(true);
+
+    try {
+      await apiRequest("/api/ai/write-and-send", {
+        method: "POST",
+        body: JSON.stringify({
+          to,
+          context: purpose,
+          tone,
+        }),
+      });
+
+      alert("Mail sent successfully 🚀");
+    } catch (error) {
+      alert("Error sending mail.");
+    }
+
+    setSending(false);
+  };
+
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "25px",
-        maxWidth: "500px",
-      }}
-    >
+    <div style={{ maxWidth: "500px" }}>
       <form
         onSubmit={handleGenerate}
         style={{
-          background: "#ffffff",
+          background: "#fff",
           padding: "25px",
           borderRadius: "12px",
-          width: "100%",
           boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
         }}
       >
         <h2>Generate Email</h2>
 
-        <label>Recipient Email</label>
         <input
           type="email"
+          placeholder="Recipient Email"
           value={to}
           onChange={(e) => setTo(e.target.value)}
           style={inputStyle}
           required
         />
 
-        <label>Subject</label>
         <input
           type="text"
+          placeholder="Subject"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           style={inputStyle}
           required
         />
 
-        <label>Email Tone</label>
         <select
           value={tone}
           onChange={(e) => setTone(e.target.value)}
@@ -92,38 +103,40 @@ function MailForm() {
           <option>Request</option>
         </select>
 
-        <label>Purpose</label>
         <textarea
+          placeholder="Purpose"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          style={{ ...inputStyle, height: "100px", resize: "none" }}
+          style={{ ...inputStyle, height: "100px" }}
           required
         />
 
         <button type="submit" style={buttonStyle}>
           {loading ? "Generating..." : "Generate Mail"}
         </button>
+
+        <button
+          type="button"
+          onClick={handleSend}
+          disabled={sending}
+          style={{ ...buttonStyle, marginTop: "10px", background: "#10b981" }}
+        >
+          {sending ? "Sending..." : "Send Mail"}
+        </button>
       </form>
 
       <div
         style={{
-          background: "#ffffff",
-          padding: "25px",
+          marginTop: "20px",
+          background: "#fff",
+          padding: "20px",
           borderRadius: "12px",
-          width: "100%",
-          boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
           whiteSpace: "pre-wrap",
+          boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
         }}
       >
-        <h2>Preview</h2>
-
-        {generatedMail ? (
-          <p>{generatedMail}</p>
-        ) : (
-          <p style={{ color: "#777" }}>
-            Your generated email will appear here...
-          </p>
-        )}
+        <h3>Preview</h3>
+        {generatedMail || "Generated email will appear here..."}
       </div>
     </div>
   );
@@ -132,11 +145,9 @@ function MailForm() {
 const inputStyle = {
   width: "100%",
   padding: "10px",
-  marginTop: "6px",
   marginBottom: "15px",
   borderRadius: "8px",
   border: "1px solid #ccc",
-  fontSize: "14px",
 };
 
 const buttonStyle = {
@@ -146,7 +157,6 @@ const buttonStyle = {
   color: "#fff",
   border: "none",
   borderRadius: "8px",
-  fontSize: "16px",
   cursor: "pointer",
 };
 

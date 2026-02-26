@@ -21,7 +21,15 @@ router.post("/smart-mail", async (req, res) => {
   try {
     const { reason, tone } = req.body;
 
-    oauth2Client.setCredentials(global.googleTokens);
+    const tokens = global.userSessions?.[req.user.email];
+
+    if (!tokens) {
+      return res.status(401).json({
+        message: "Google session expired. Please login again.",
+      });
+    }
+
+    oauth2Client.setCredentials(tokens);
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
@@ -62,48 +70,65 @@ If there is conflict, suggest rescheduling politely.
 
 /*
 -------------------------------
-Write and Send (Manual Context)
+Write and Send (Structured)
 -------------------------------
 */
 router.post("/write-and-send", async (req, res) => {
   try {
-    const { to, context, tone } = req.body;
+    const {
+      to,
+      context,
+      subject,
+      tone,
+      reason,
+      dueDate,
+      dueTime,
+      links,
+      comments,
+    } = req.body;
 
-    if (!to || !context || !tone) {
+    if (!to || !subject || !context || !tone) {
       return res.status(400).json({
-        message: "to, context and tone are required",
+        message: "to, subject, context and tone are required",
       });
     }
 
-    oauth2Client.setCredentials(global.googleTokens);
+    const tokens = global.userSessions?.[req.user.email];
+
+    if (!tokens) {
+      return res.status(401).json({
+        message: "Google session expired. Please login again.",
+      });
+    }
+
+    oauth2Client.setCredentials(tokens);
 
     const prompt = `
-Write a professional email.
+Write a professional business email with the following structured details:
 
-Context:
-${context}
-
+Subject: ${subject}
+Main Context: ${context}
 Tone: ${tone}
 
-Include:
-- Proper subject line
-- Clear explanation
-- Polite closing
+Reason: ${reason || "Not specified"}
+Due Date: ${dueDate || "Not specified"}
+Due Time: ${dueTime || "Not specified"}
+Relevant Links: ${links || "None"}
+Additional Comments: ${comments || "None"}
+
+Make it clear, structured, and professional.
+Include greeting and polite closing.
 `;
 
     const generatedEmail = await geminiService.generateContent(prompt);
-
-    const lines = generatedEmail.split("\n");
-    const subjectLine = lines[0].replace("Subject:", "").trim();
-    const body = lines.slice(1).join("\n");
 
     const gmail = google.gmail({ version: "v1", auth: oauth2Client });
 
     const email = [
       `To: ${to}`,
-      `Subject: ${subjectLine}`,
+      `Subject: ${subject}`,
       "",
-      body,
+      generatedEmail,
     ].join("\n");
 
     const encodedEmail = Buffer.from(email)
@@ -118,7 +143,7 @@ Include:
     });
 
     res.json({
-      message: "AI email generated and sent successfully 🚀",
+      message: "Structured AI email generated and sent successfully 🚀",
       email: generatedEmail,
     });
 
