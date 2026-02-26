@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { apiRequest } from "../utils/api";
 
 function MailForm() {
   const [to, setTo] = useState("");
@@ -6,36 +7,48 @@ function MailForm() {
   const [tone, setTone] = useState("Professional");
   const [purpose, setPurpose] = useState("");
   const [generatedMail, setGeneratedMail] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleGenerate = (e) => {
+  const handleGenerate = async (e) => {
     e.preventDefault();
 
-    const preview = `To: ${to}
+    setLoading(true);
+    setGeneratedMail("");
 
-Subject: ${subject}
+    try {
+      const response = await apiRequest("/api/ai/generate-mail", {
+        method: "POST",
+        body: JSON.stringify({
+          to,
+          subject,
+          tone,
+          purpose,
+        }),
+      });
 
-Hello,
+      if (response?.content) {
+        setGeneratedMail(response.content);
+      } else if (response?.message) {
+        setGeneratedMail(response.message);
+      } else {
+        setGeneratedMail("No response received.");
+      }
+    } catch (error) {
+      setGeneratedMail("Error generating mail.");
+    }
 
-This is a ${tone.toLowerCase()} email regarding ${purpose}.
-
-I hope you are doing well. I wanted to reach out concerning ${purpose}.
-Please let me know your availability and thoughts.
-
-Best regards,
-(Your Name)`;
-
-    setGeneratedMail(preview);
+    setLoading(false);
   };
 
   return (
     <div
-  style={{
-    display: "flex",
-    flexDirection: "column",
-    gap: "25px",
-    maxWidth: "500px",
-  }}
->
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        gap: "25px",
+        maxWidth: "500px",
+      }}
+    >
       <form
         onSubmit={handleGenerate}
         style={{
@@ -53,7 +66,6 @@ Best regards,
           type="email"
           value={to}
           onChange={(e) => setTo(e.target.value)}
-          placeholder="client@gmail.com"
           style={inputStyle}
           required
         />
@@ -63,7 +75,6 @@ Best regards,
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="Project Update"
           style={inputStyle}
           required
         />
@@ -85,13 +96,12 @@ Best regards,
         <textarea
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          placeholder="Explain why you are sending this email..."
           style={{ ...inputStyle, height: "100px", resize: "none" }}
           required
         />
 
         <button type="submit" style={buttonStyle}>
-          Generate Mail
+          {loading ? "Generating..." : "Generate Mail"}
         </button>
       </form>
 

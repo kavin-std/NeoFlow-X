@@ -1,12 +1,13 @@
 const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
+const verifyToken = require("./middleware/authMiddleware");
 require("dotenv").config();
 
 const authRoutes = require("./routes/authRoutes");
-const gmailRoutes = require("./routes/gmailRoutes");
-const aiRoutes = require("./routes/aiRoutes");
-const calendarRoutes = require("./routes/calendarRoutes");
+app.use("/api/gmail", verifyToken, gmailRoutes);
+app.use("/api/ai", verifyToken, aiRoutes);
+app.use("/api/calendar", verifyToken, calendarRoutes);
 
 const app = express();
 
