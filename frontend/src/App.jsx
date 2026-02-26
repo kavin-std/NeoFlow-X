@@ -15,28 +15,42 @@ function App() {
   const [isAuth, setIsAuth] = useState(null); // null = loading state
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const res = await fetch(
-          "https://neoflow-x.onrender.com/auth/me",
-          {
-            credentials: "include", // VERY IMPORTANT
-          }
-        );
+    const params = new URLSearchParams(window.location.search);
+    const tokenFromUrl = params.get("token");
 
-        const data = await res.json();
+    // If token comes from Google redirect
+    if (tokenFromUrl) {
+      localStorage.setItem("auth_token", tokenFromUrl);
+      window.history.replaceState({}, document.title, "/");
+    }
 
+    const token = localStorage.getItem("auth_token");
+
+    if (!token) {
+      setIsAuth(false);
+      return;
+    }
+
+    // Verify token with backend
+    fetch("https://neoflow-x.onrender.com/auth/me", {
+      headers: {
+        Authorization: "Bearer " + token,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
         if (data.authenticated) {
           setIsAuth(true);
         } else {
+          localStorage.removeItem("auth_token");
           setIsAuth(false);
         }
-      } catch (error) {
+      })
+      .catch(() => {
+        localStorage.removeItem("auth_token");
         setIsAuth(false);
-      }
-    };
+      });
 
-    checkAuth();
   }, []);
 
   // Loading screen while checking auth
@@ -47,10 +61,8 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Login */}
         <Route path="/login" element={<Login />} />
 
-        {/* Protected Area */}
         <Route
           path="/"
           element={isAuth ? <Layout /> : <Navigate to="/login" />}
