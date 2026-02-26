@@ -86,18 +86,22 @@ GET CURRENT USER
 =====================================
 */
 router.get("/me", (req, res) => {
-  const token = req.cookies.neoflow_token;
+  const authHeader = req.headers.authorization;
 
-  if (!token) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ authenticated: false });
   }
 
+  const token = authHeader.split(" ")[1];
+
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
     return res.json({
       authenticated: true,
       user: decoded,
     });
+
   } catch (error) {
     return res.status(401).json({ authenticated: false });
   }
