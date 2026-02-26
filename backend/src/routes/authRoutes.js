@@ -68,13 +68,9 @@ router.get("/google/callback", async (req, res) => {
     global.userSessions[user.email] = tokens;
 
     // ✅ FIXED COOKIE CONFIG
-    res.cookie("neoflow_token", jwtToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "none",
-      path: "/",              // IMPORTANT
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+    res.redirect(
+  "https://neoflow-x.vercel.app/?token=" + jwtToken
+);
 
     res.redirect("https://neoflow-x.vercel.app/");
 
