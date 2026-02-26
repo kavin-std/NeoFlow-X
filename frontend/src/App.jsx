@@ -12,48 +12,54 @@ import Assistant from "./pages/Assistant";
 import Settings from "./pages/Settings";
 
 function App() {
-  const [isAuth, setIsAuth] = useState(null); // null = loading state
+  const [isAuth, setIsAuth] = useState(null); // null = loading
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenFromUrl = params.get("token");
+    const initializeAuth = async () => {
+      // 1️⃣ Check if token came from Google redirect
+      const params = new URLSearchParams(window.location.search);
+      const tokenFromUrl = params.get("token");
 
-    // If token comes from Google redirect
-    if (tokenFromUrl) {
-      localStorage.setItem("auth_token", tokenFromUrl);
-      window.history.replaceState({}, document.title, "/");
-    }
+      if (tokenFromUrl) {
+        localStorage.setItem("auth_token", tokenFromUrl);
+        window.history.replaceState({}, document.title, "/");
+      }
 
-    const token = localStorage.getItem("auth_token");
+      // 2️⃣ Get stored token
+      const token = localStorage.getItem("auth_token");
 
-    if (!token) {
-      setIsAuth(false);
-      return;
-    }
+      if (!token) {
+        setIsAuth(false);
+        return;
+      }
 
-    // Verify token with backend
-    fetch("https://neoflow-x.onrender.com/auth/me", {
-      headers: {
-        Authorization: "Bearer " + token,
-      },
-    })
-      .then(res => res.json())
-      .then(data => {
+      try {
+        const res = await fetch(
+          "https://neoflow-x.onrender.com/auth/me",
+          {
+            headers: {
+              Authorization: "Bearer " + token,
+            },
+          }
+        );
+
+        const data = await res.json();
+
         if (data.authenticated) {
           setIsAuth(true);
         } else {
           localStorage.removeItem("auth_token");
           setIsAuth(false);
         }
-      })
-      .catch(() => {
+      } catch (error) {
         localStorage.removeItem("auth_token");
         setIsAuth(false);
-      });
+      }
+    };
 
+    initializeAuth();
   }, []);
 
-  // Loading screen while checking auth
   if (isAuth === null) {
     return <div>Loading...</div>;
   }
@@ -61,11 +67,20 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<Login />} />
+        {/* Login */}
+        <Route
+          path="/login"
+          element={
+            isAuth ? <Navigate to="/" replace /> : <Login />
+          }
+        />
 
+        {/* Protected Routes */}
         <Route
           path="/"
-          element={isAuth ? <Layout /> : <Navigate to="/login" />}
+          element={
+            isAuth ? <Layout /> : <Navigate to="/login" replace />
+          }
         >
           <Route index element={<Dashboard />} />
           <Route path="calendar" element={<Calendar />} />
