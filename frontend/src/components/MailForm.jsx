@@ -6,10 +6,16 @@ function MailForm() {
   const [subject, setSubject] = useState("");
   const [tone, setTone] = useState("Professional");
   const [purpose, setPurpose] = useState("");
+  const [reason, setReason] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [dueTime, setDueTime] = useState("");
+  const [links, setLinks] = useState("");
+  const [comments, setComments] = useState("");
   const [generatedMail, setGeneratedMail] = useState("");
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
 
+  // 🔹 Generate Preview Only
   const handleGenerate = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -26,7 +32,11 @@ function MailForm() {
         }),
       });
 
-      setGeneratedMail(response?.content || response?.email || "No response received.");
+      setGeneratedMail(
+        response?.content ||
+        response?.email ||
+        "No response received."
+      );
     } catch (error) {
       setGeneratedMail("Error generating mail.");
     }
@@ -34,6 +44,7 @@ function MailForm() {
     setLoading(false);
   };
 
+  // 🔹 Send Structured Email
   const handleSend = async () => {
     if (!generatedMail) {
       alert("Generate email first.");
@@ -47,8 +58,14 @@ function MailForm() {
         method: "POST",
         body: JSON.stringify({
           to,
+          subject,
           context: purpose,
           tone,
+          reason,
+          dueDate,
+          dueTime,
+          links,
+          comments,
         }),
       });
 
@@ -71,7 +88,7 @@ function MailForm() {
           boxShadow: "0 4px 14px rgba(0,0,0,0.08)",
         }}
       >
-        <h2>Generate Email</h2>
+        <h2>AI Mail Generator</h2>
 
         <input
           type="email"
@@ -104,11 +121,49 @@ function MailForm() {
         </select>
 
         <textarea
-          placeholder="Purpose"
+          placeholder="Main Context / Purpose"
           value={purpose}
           onChange={(e) => setPurpose(e.target.value)}
-          style={{ ...inputStyle, height: "100px" }}
+          style={{ ...inputStyle, height: "80px" }}
           required
+        />
+
+        <textarea
+          placeholder="Reason (Optional)"
+          value={reason}
+          onChange={(e) => setReason(e.target.value)}
+          style={{ ...inputStyle, height: "60px" }}
+        />
+
+        <label>Due Date</label>
+        <input
+          type="date"
+          value={dueDate}
+          onChange={(e) => setDueDate(e.target.value)}
+          style={inputStyle}
+        />
+
+        <label>Due Time</label>
+        <input
+          type="time"
+          value={dueTime}
+          onChange={(e) => setDueTime(e.target.value)}
+          style={inputStyle}
+        />
+
+        <input
+          type="text"
+          placeholder="Relevant Links (Optional)"
+          value={links}
+          onChange={(e) => setLinks(e.target.value)}
+          style={inputStyle}
+        />
+
+        <textarea
+          placeholder="Additional Comments (Optional)"
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          style={{ ...inputStyle, height: "60px" }}
         />
 
         <button type="submit" style={buttonStyle}>
@@ -119,7 +174,11 @@ function MailForm() {
           type="button"
           onClick={handleSend}
           disabled={sending}
-          style={{ ...buttonStyle, marginTop: "10px", background: "#10b981" }}
+          style={{
+            ...buttonStyle,
+            marginTop: "10px",
+            background: "#10b981",
+          }}
         >
           {sending ? "Sending..." : "Send Mail"}
         </button>
