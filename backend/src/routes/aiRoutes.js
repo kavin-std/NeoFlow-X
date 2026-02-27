@@ -93,6 +93,8 @@ router.post("/preview-mail", async (req, res) => {
       });
     }
 
+    const user = await User.findOne({ email: req.user.email });
+
     const prompt = `
 You are a professional email writing assistant.
 
@@ -116,7 +118,7 @@ Additional Comments: ${comments || "None"}
 End the email with:
 
 Best regards,
-(Your Name)
+${user?.name || ""}
 `;
 
     const generatedEmail = await geminiService.generateContent(prompt);
