@@ -16,33 +16,33 @@ function MailForm() {
   const [sending, setSending] = useState(false);
 
   // 🔹 Generate Preview Only
-  const handleGenerate = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setGeneratedMail("");
+const handleGenerate = async (e) => {
+  e.preventDefault();
+  setLoading(true);
+  setGeneratedMail("");
 
-    try {
-      const response = await apiRequest("/api/ai/generate-mail", {
-        method: "POST",
-        body: JSON.stringify({
-          to,
-          subject,
-          tone,
-          purpose,
-        }),
-      });
+  try {
+    const response = await apiRequest("/api/ai/preview-mail", {
+      method: "POST",
+      body: JSON.stringify({
+        subject,
+        context: purpose,
+        tone,
+        reason,
+        dueDate,
+        dueTime,
+        links,
+        comments,
+      }),
+    });
 
-      setGeneratedMail(
-        response?.content ||
-        response?.email ||
-        "No response received."
-      );
-    } catch (error) {
-      setGeneratedMail("Error generating mail.");
-    }
+    setGeneratedMail(response?.email || "No preview generated.");
+  } catch (error) {
+    setGeneratedMail("Error generating preview.");
+  }
 
-    setLoading(false);
-  };
+  setLoading(false);
+};
 
   // 🔹 Send Structured Email
   const handleSend = async () => {

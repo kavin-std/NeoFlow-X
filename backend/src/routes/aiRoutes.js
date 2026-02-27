@@ -7,7 +7,7 @@ const geminiService = require("../services/aiService");
 
 /*
 -------------------------------
-Basic Mail
+Basic Mail (Old Simple Version)
 -------------------------------
 */
 router.post("/generate-mail", generateMail);
@@ -70,6 +70,66 @@ If there is conflict, suggest rescheduling politely.
 
 /*
 -------------------------------
+Preview Mail (Structured)
+-------------------------------
+*/
+router.post("/preview-mail", async (req, res) => {
+  try {
+    const {
+      subject,
+      context,
+      tone,
+      reason,
+      dueDate,
+      dueTime,
+      links,
+      comments,
+    } = req.body;
+
+    if (!subject || !context || !tone) {
+      return res.status(400).json({
+        message: "subject, context and tone are required",
+      });
+    }
+
+    const prompt = `
+You are a professional email writing assistant.
+
+STRICT RULES:
+- Use the exact subject provided.
+- Use all provided structured fields.
+- Do NOT invent placeholders.
+- Do NOT generate generic templates.
+- Keep tone strictly: ${tone}.
+
+EMAIL DETAILS:
+
+Subject: ${subject}
+Main Context: ${context}
+Reason: ${reason || "Not provided"}
+Due Date: ${dueDate || "Not provided"}
+Due Time: ${dueTime || "Not provided"}
+Links: ${links || "None"}
+Additional Comments: ${comments || "None"}
+
+End the email with:
+
+Best regards,
+(Your Name)
+`;
+
+    const generatedEmail = await geminiService.generateContent(prompt);
+
+    res.json({ email: generatedEmail });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Preview failed" });
+  }
+});
+
+/*
+-------------------------------
 Write and Send (Structured)
 -------------------------------
 */
@@ -104,20 +164,29 @@ router.post("/write-and-send", async (req, res) => {
     oauth2Client.setCredentials(tokens);
 
     const prompt = `
-Write a professional business email with the following structured details:
+You are a professional email writing assistant.
+
+STRICT RULES:
+- Use the exact subject provided.
+- Use all provided structured fields.
+- Do NOT invent placeholders.
+- Do NOT generate generic templates.
+- Keep tone strictly: ${tone}.
+
+EMAIL DETAILS:
 
 Subject: ${subject}
 Main Context: ${context}
-Tone: ${tone}
-
-Reason: ${reason || "Not specified"}
-Due Date: ${dueDate || "Not specified"}
-Due Time: ${dueTime || "Not specified"}
-Relevant Links: ${links || "None"}
+Reason: ${reason || "Not provided"}
+Due Date: ${dueDate || "Not provided"}
+Due Time: ${dueTime || "Not provided"}
+Links: ${links || "None"}
 Additional Comments: ${comments || "None"}
 
-Make it clear, structured, and professional.
-Include greeting and polite closing.
+End the email with:
+
+Best regards,
+${req.user.name}
 `;
 
     const generatedEmail = await geminiService.generateContent(prompt);
@@ -153,11 +222,6 @@ Include greeting and polite closing.
   }
 });
 
-/*
--------------------------------
-Debug Route
--------------------------------
-*/
 router.get("/test", (req, res) => {
   res.send("AI route working");
 });
