@@ -229,4 +229,87 @@ router.get("/test", (req, res) => {
   res.send("AI route working");
 });
 
+
+/*
+-------------------------------
+Summarize Recent Emails
+-------------------------------
+*/
+router.post("/summarize-mails", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.user.email });
+
+    if (!user || !user.googleTokens) {
+      return res.status(401).json({
+        message: "Google session expired. Please login again.",
+      });
+    }
+
+    oauth2Client.setCredentials(user.googleTokens);
+
+    const gmail = google.gmail({ version: "v1", auth: oauth2Client });
+
+    // Fetch latest 5 emails
+    const listResponse = await gmail.users.messages.list({
+      userId: "me",
+      maxResults: 5,
+    });
+
+    const messages = listResponse.data.messages || [];
+
+    if (!messages.length) {
+      return res.json({ summary: "No recent emails found." });
+    }
+
+    let emailContent = "";
+
+    for (const msg of messages) {
+      const message = await gmail.users.messages.get({
+        userId: "me",
+        id: msg.id,
+      });
+
+      const headers = message.data.payload.headers;
+
+      const subject =
+        headers.find(h => h.name === "Subject")?.value || "No Subject";
+
+      const from =
+        headers.find(h => h.name === "From")?.value || "Unknown Sender";
+
+      const snippet = message.data.snippet || "";
+
+      emailContent += `
+From: ${from}
+Subject: ${subject}
+Snippet: ${snippet}
+
+`;
+    }
+
+    const prompt = `
+You are an AI email assistant.
+
+Summarize the following recent emails clearly.
+Extract:
+- Important topics
+- Deadlines
+- Action items
+- Important links
+- Key senders
+
+Emails:
+${emailContent}
+`;
+
+    const summary = await geminiService.generateContent(prompt);
+
+    res.json({ summary });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Summarization failed" });
+  }
+});
+
 module.exports = router;
