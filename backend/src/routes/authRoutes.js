@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const axios = require("axios");
 const oauth2Client = require("../config/google");
+const User = require("../models/User");
 
 const router = express.Router();
 
@@ -52,27 +53,31 @@ router.get("/google/callback", async (req, res) => {
       }
     );
 
-    const user = {
+    const userData = {
       email: userInfo.data.email,
       name: userInfo.data.name,
       picture: userInfo.data.picture,
     };
 
+    // 🔥 SAVE OR UPDATE USER IN MONGODB
+    await User.findOneAndUpdate(
+      { email: userData.email },
+      {
+        ...userData,
+        googleTokens: tokens,
+      },
+      { upsert: true, new: true }
+    );
+
     // Create JWT
-    const jwtToken = jwt.sign(user, process.env.JWT_SECRET, {
+    const jwtToken = jwt.sign(userData, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // Store Google tokens in memory
-    global.userSessions = global.userSessions || {};
-    global.userSessions[user.email] = tokens;
-
-    console.log("Stored sessions after login:", global.userSessions);
-
-    // ✅ Dynamic Frontend URL (VERY IMPORTANT)
+    // Dynamic frontend redirect
     const FRONTEND_URL =
       process.env.FRONTEND_URL || "http://localhost:5173";
-    console.log("FRONTEND_URL:", FRONTEND_URL); // 👈 ADD HERE
+
     return res.redirect(`${FRONTEND_URL}/?token=${jwtToken}`);
 
   } catch (error) {

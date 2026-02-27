@@ -4,6 +4,7 @@ const { generateMail } = require("../controllers/aiController");
 const { google } = require("googleapis");
 const oauth2Client = require("../config/google");
 const geminiService = require("../services/aiService");
+const User = require("../models/User");
 
 /*
 -------------------------------
@@ -21,15 +22,15 @@ router.post("/smart-mail", async (req, res) => {
   try {
     const { reason, tone } = req.body;
 
-    const tokens = global.userSessions?.[req.user.email];
+    const user = await User.findOne({ email: req.user.email });
 
-    if (!tokens) {
+    if (!user || !user.googleTokens) {
       return res.status(401).json({
         message: "Google session expired. Please login again.",
       });
     }
 
-    oauth2Client.setCredentials(tokens);
+    oauth2Client.setCredentials(user.googleTokens);
 
     const calendar = google.calendar({ version: "v3", auth: oauth2Client });
 
@@ -153,15 +154,15 @@ router.post("/write-and-send", async (req, res) => {
       });
     }
 
-    const tokens = global.userSessions?.[req.user.email];
+    const user = await User.findOne({ email: req.user.email });
 
-    if (!tokens) {
+    if (!user || !user.googleTokens) {
       return res.status(401).json({
         message: "Google session expired. Please login again.",
       });
     }
 
-    oauth2Client.setCredentials(tokens);
+    oauth2Client.setCredentials(user.googleTokens);
 
     const prompt = `
 You are a professional email writing assistant.
@@ -186,7 +187,7 @@ Additional Comments: ${comments || "None"}
 End the email with:
 
 Best regards,
-${req.user.name}
+${user.name}
 `;
 
     const generatedEmail = await geminiService.generateContent(prompt);
