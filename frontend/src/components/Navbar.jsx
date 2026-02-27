@@ -1,16 +1,12 @@
 import React from "react";
+import { useNavigate } from "react-router-dom";
 
 function Navbar() {
+  const navigate = useNavigate();
 
   const handleLogout = () => {
-    // 1️⃣ Remove JWT from localStorage
     localStorage.removeItem("auth_token");
-
-    // 2️⃣ Optional: clear any other session data
-    // localStorage.clear();
-
-    // 3️⃣ Redirect to login
-    window.location.href = "/";
+    navigate("/login", { replace: true });
   };
 
   return (
